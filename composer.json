@@ -10,7 +10,7 @@
             "email": "misbahuldmunir@gmail.com"
         }
     ],
-    "required":{
+    "require":{
         "yiisoft/yii2-mongodb": "*"
     }
     "autoload": {
