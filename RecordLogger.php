@@ -6,7 +6,6 @@ use yii\base\Behavior;
 use yii\db\BaseActiveRecord;
 use \Yii;
 use yii\mongodb\Collection;
-use yii\helpers\ArrayHelper;
 use yii\mongodb\Connection;
 use yii\di\Instance;
 use yii\base\InvalidConfigException;
@@ -16,31 +15,51 @@ use yii\base\InvalidConfigException;
  *
  * @author MDMunir
  * 
- * @property Collection $collection Description
- * @property Connection $connection Description
  */
 class RecordLogger extends Behavior
 {
     /**
      *
-     * @var Collection[]
+     * @var array 
      */
-    private static $_collection = [];
-    private static $_user_id;
     public $logParams = [];
+
+    /**
+     *
+     * @var array 
+     */
     public $attributes = [];
+
+    /**
+     *
+     * @var string 
+     */
     public $collectionName;
+
+    /**
+     *
+     * @var Connection 
+     */
     public $connection = 'mongodb';
+
+    private static $_user_id = false;
+    private static $_data = [];
+    private static $_level = 0;
+
+    /**
+     *
+     * @var Connection[] 
+     */
+    private static $_dbs = [];
 
     public function init()
     {
-        if($this->collectionName === null){
+        if ($this->collectionName === null) {
             throw new InvalidConfigException("RecordLogger::collectionName must be set.");
         }
-        $this->connection = Instance::ensure($this->connection, Connection::className());
-        if (self::$_user_id === null) {
+        if (self::$_user_id === false) {
             $user = Yii::$app->user;
-            self::$_user_id = $user->getIsGuest() ? 0 : $user->getId();
+            self::$_user_id = $user->getId();
         }
     }
 
@@ -52,15 +71,34 @@ class RecordLogger extends Behavior
         ];
     }
 
-    /**
-     * @return Collection Description
-     */
-    public function getCollection()
+    public static function begin($db = 'mongodb')
     {
-        if (!isset(self::$_collection[$this->collectionName])) {
-            self::$_collection[$this->collectionName] = $this->connection->getCollection($this->collectionName);
+        array_push(static::$_dbs, Instance::ensure($db, Connection::className()));
+        static::$_data[static::$_level] = [];
+        static::$_level++;
+    }
+
+    public static function commit()
+    {
+        try {
+            static::$_level--;
+            $db = array_pop(static::$_dbs);
+            foreach (static::$_data[static::$_level] as $collections) {
+                foreach ($collections as $name => $rows) {
+                    $db->getCollection($name)->batchInsert($rows);
+                }
+            }
+        } catch (\Exception $exc) {
+            
         }
-        return self::$_collection[$this->collectionName];
+        unset(static::$_data[static::$_level]);
+    }
+
+    public static function rollback()
+    {
+        static::$_level--;
+        array_pop(static::$_dbs);
+        unset(static::$_data[static::$_level]);
     }
 
     /**
@@ -70,11 +108,11 @@ class RecordLogger extends Behavior
     public function insertLog($event)
     {
         $model = $event->sender;
-        $logs = ArrayHelper::merge([
-                'log_time1' => new \MongoDate(),
-                'log_time2' => time(),
-                'log_by' => self::$_user_id,
-                ], $this->logParams);
+        $logs = array_merge([
+            'log_time1' => new \MongoDate(),
+            'log_time2' => time(),
+            'log_by' => self::$_user_id,
+            ], $this->logParams);
         $data = [];
         foreach ($this->attributes as $attribute) {
             if ($model->hasAttribute($attribute)) {
@@ -83,10 +121,16 @@ class RecordLogger extends Behavior
                 $data[$attribute] = $logs[$attribute];
             }
         }
-        try {
-            $this->collection->insert($data);
-        } catch (\Exception $exc) {
-            
+
+        if (static::$_level > 0) {
+            static::$_data[static::$_level - 1][$this->collectionName][] = $data;
+        } else {
+            try {
+                $this->connection = Instance::ensure($this->connection, Connection::className());
+                $this->connection->getCollection($this->collectionName)->insert($data);
+            } catch (\Exception $exc) {
+                
+            }
         }
     }
 }
