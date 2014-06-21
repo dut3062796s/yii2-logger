@@ -2,10 +2,9 @@
 
 namespace mdm\logger;
 
+use \Yii;
 use yii\base\Behavior;
 use yii\db\BaseActiveRecord;
-use \Yii;
-use yii\mongodb\Collection;
 use yii\mongodb\Connection;
 use yii\di\Instance;
 use yii\base\InvalidConfigException;
@@ -41,7 +40,6 @@ class RecordLogger extends Behavior
      * @var Connection 
      */
     public $connection = 'mongodb';
-
     private static $_user_id = false;
     private static $_data = [];
     private static $_level = 0;
