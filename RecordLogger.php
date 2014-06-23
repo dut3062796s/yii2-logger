@@ -39,16 +39,15 @@ class RecordLogger extends Behavior
      *
      * @var Connection 
      */
-    public $connection = 'mongodb';
-    private static $_user_id = false;
-    private static $_data = [];
-    private static $_level = 0;
+    public static $connection = 'mongodb';
 
     /**
      *
-     * @var Connection[] 
+     * @var mixed 
      */
-    private static $_dbs = [];
+    private static $_user_id = false;
+    private static $_data = [];
+    private static $_level = 0;
 
     public function init()
     {
@@ -69,9 +68,8 @@ class RecordLogger extends Behavior
         ];
     }
 
-    public static function begin($db = 'mongodb')
+    public static function begin()
     {
-        array_push(static::$_dbs, Instance::ensure($db, Connection::className()));
         static::$_data[static::$_level] = [];
         static::$_level++;
     }
@@ -80,10 +78,10 @@ class RecordLogger extends Behavior
     {
         try {
             static::$_level--;
-            $db = array_pop(static::$_dbs);
+            static::$connection = Instance::ensure(static::$connection, Connection::className());
             foreach (static::$_data[static::$_level] as $collections) {
                 foreach ($collections as $name => $rows) {
-                    $db->getCollection($name)->batchInsert($rows);
+                    static::$connection->getCollection($name)->batchInsert($rows);
                 }
             }
         } catch (\Exception $exc) {
@@ -95,7 +93,6 @@ class RecordLogger extends Behavior
     public static function rollback()
     {
         static::$_level--;
-        array_pop(static::$_dbs);
         unset(static::$_data[static::$_level]);
     }
 
@@ -124,8 +121,8 @@ class RecordLogger extends Behavior
             static::$_data[static::$_level - 1][$this->collectionName][] = $data;
         } else {
             try {
-                $this->connection = Instance::ensure($this->connection, Connection::className());
-                $this->connection->getCollection($this->collectionName)->insert($data);
+                static::$connection = Instance::ensure(self::$connection, Connection::className());
+                static::$connection->getCollection($this->collectionName)->insert($data);
             } catch (\Exception $exc) {
                 
             }
