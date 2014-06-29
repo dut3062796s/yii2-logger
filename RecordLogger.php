@@ -5,8 +5,6 @@ namespace mdm\logger;
 use \Yii;
 use yii\base\Behavior;
 use yii\db\BaseActiveRecord;
-use yii\mongodb\Connection;
-use yii\di\Instance;
 use yii\base\InvalidConfigException;
 
 /**
@@ -33,13 +31,7 @@ class RecordLogger extends Behavior
      *
      * @var string 
      */
-    public $collectionName;
-
-    /**
-     *
-     * @var Connection 
-     */
-    public static $connection = 'mongodb';
+    public $name;
 
     /**
      *
@@ -51,8 +43,8 @@ class RecordLogger extends Behavior
 
     public function init()
     {
-        if ($this->collectionName === null) {
-            throw new InvalidConfigException("RecordLogger::collectionName must be set.");
+        if ($this->name === null) {
+            throw new InvalidConfigException("RecordLogger::name must be set.");
         }
         if (self::$_user_id === false) {
             $user = Yii::$app->user;
@@ -78,10 +70,12 @@ class RecordLogger extends Behavior
     {
         try {
             static::$_level--;
-            static::$connection = Instance::ensure(static::$connection, Connection::className());
-            foreach (static::$_data[static::$_level] as $collections) {
-                foreach ($collections as $name => $rows) {
-                    static::$connection->getCollection($name)->batchInsert($rows);
+            /* @var $storage StorageInterface */
+            $storage = \Yii::$container->get('mdm\logger\StorageInterface');
+
+            foreach (static::$_data[static::$_level] as $logs) {
+                foreach ($logs as $name => $rows) {
+                    $storage->batchSave($name, $rows);
                 }
             }
         } catch (\Exception $exc) {
@@ -118,11 +112,12 @@ class RecordLogger extends Behavior
         }
 
         if (static::$_level > 0) {
-            static::$_data[static::$_level - 1][$this->collectionName][] = $data;
+            static::$_data[static::$_level - 1][$this->name][] = $data;
         } else {
             try {
-                static::$connection = Instance::ensure(self::$connection, Connection::className());
-                static::$connection->getCollection($this->collectionName)->insert($data);
+                /* @var $storage StorageInterface */
+                $storage = \Yii::$container->get('mdm\logger\StorageInterface');
+                $storage->save($this->name, $data);
             } catch (\Exception $exc) {
                 
             }
