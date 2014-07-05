@@ -71,7 +71,7 @@ class RecordLogger extends Behavior
         try {
             static::$_level--;
             /* @var $storage StorageInterface */
-            $storage = Yii::createObject('mdm\logger\StorageInterface');
+            $storage = Yii::createObject('mdm\logger\BaseStorage');
 
             foreach (static::$_data[static::$_level] as $logs) {
                 foreach ($logs as $name => $rows) {
@@ -116,7 +116,7 @@ class RecordLogger extends Behavior
         } else {
             try {
                 /* @var $storage StorageInterface */
-                $storage = Yii::createObject('mdm\logger\StorageInterface');
+                $storage = Yii::createObject('mdm\logger\BaseStorage');
                 $storage->save($this->name, $data);
             } catch (\Exception $exc) {
                 

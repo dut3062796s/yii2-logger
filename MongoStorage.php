@@ -10,7 +10,7 @@ use yii\di\Instance;
  *
  * @author Misbahul D Munir (mdmunir) <misbahuldmunir@gmail.com>
  */
-class MongoStorage extends \yii\base\Object implements StorageInterface
+class MongoStorage extends BaseStorage
 {
     /**
      *
@@ -23,12 +23,12 @@ class MongoStorage extends \yii\base\Object implements StorageInterface
         $this->db = Instance::ensure($this->db, Connection::className());
     }
 
-    public function save($name, $row)
+    protected function doSave($name, $row)
     {
         $this->db->getCollection($name)->insert($row);
     }
     
-    public function batchSave($name, $rows)
+    protected function doBatchSave($name, $rows)
     {
         $this->db->getCollection($name)->batchInsert($rows);
     }
