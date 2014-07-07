@@ -25,11 +25,13 @@ class MongoStorage extends BaseStorage
 
     protected function doSave($name, $row)
     {
+        \Yii::trace("Save to '{$name}'", __METHOD__);
         $this->db->getCollection($name)->insert($row);
     }
     
     protected function doBatchSave($name, $rows)
     {
+        \Yii::trace("Batch save to '{$name}'", __METHOD__);
         $this->db->getCollection($name)->batchInsert($rows);
     }
 }

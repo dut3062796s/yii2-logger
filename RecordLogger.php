@@ -72,17 +72,14 @@ class RecordLogger extends Behavior
             if (!isset(static::$_data[static::$_level])) {
                 return;
             }
-            /* @var $storage StorageInterface */
+            /* @var $storage BaseStorage */
             $storage = Yii::createObject('mdm\logger\BaseStorage');
-            Yii::trace(strtr('log value at {level} ar {value}', [
+            Yii::trace(strtr('log value at {level} are {value}', [
                 '{level}' => static::$_level + 1,
                 '{value}' => \yii\helpers\VarDumper::dumpAsString(static::$_data[static::$_level])
                 ]), __METHOD__);
-            Yii::t($category, $message);
-            foreach (static::$_data[static::$_level] as $logs) {
-                foreach ($logs as $name => $rows) {
-                    $storage->batchSave($name, $rows);
-                }
+            foreach (static::$_data[static::$_level] as $name => $rows) {
+                $storage->batchSave($name, $rows);
             }
         } catch (\Exception $exc) {
             
@@ -124,6 +121,10 @@ class RecordLogger extends Behavior
                 /* @var $storage BaseStorage */
                 $storage = Yii::createObject('mdm\logger\BaseStorage');
                 $storage->save($this->name, $data);
+                Yii::trace(strtr('log value name \'{name}\' are {value}', [
+                    '{name}' => $this->name,
+                    '{value}' => \yii\helpers\VarDumper::dumpAsString($data)
+                    ]), __METHOD__);
             } catch (\Exception $exc) {
                 
             }
