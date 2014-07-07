@@ -46,9 +46,9 @@ class RecordLogger extends Behavior
         if ($this->name === null) {
             throw new InvalidConfigException("RecordLogger::name must be set.");
         }
-        if (self::$_user_id === false) {
+        if (static::$_user_id === false) {
             $user = Yii::$app->user;
-            self::$_user_id = $user->getId();
+            static::$_user_id = $user->getId();
         }
     }
 
@@ -62,7 +62,6 @@ class RecordLogger extends Behavior
 
     public static function begin()
     {
-        static::$_data[static::$_level] = [];
         static::$_level++;
     }
 
@@ -70,9 +69,16 @@ class RecordLogger extends Behavior
     {
         try {
             static::$_level--;
+            if (!isset(static::$_data[static::$_level])) {
+                return;
+            }
             /* @var $storage StorageInterface */
             $storage = Yii::createObject('mdm\logger\BaseStorage');
-
+            Yii::trace(strtr('log value at {level} ar {value}', [
+                '{level}' => static::$_level + 1,
+                '{value}' => \yii\helpers\VarDumper::dumpAsString(static::$_data[static::$_level])
+                ]), __METHOD__);
+            Yii::t($category, $message);
             foreach (static::$_data[static::$_level] as $logs) {
                 foreach ($logs as $name => $rows) {
                     $storage->batchSave($name, $rows);
@@ -100,7 +106,7 @@ class RecordLogger extends Behavior
         $logs = array_merge([
             'log_time1' => new \MongoDate(),
             'log_time2' => time(),
-            'log_by' => self::$_user_id,
+            'log_by' => static::$_user_id,
             ], $this->logParams);
         $data = [];
         foreach ($this->attributes as $attribute) {
@@ -115,7 +121,7 @@ class RecordLogger extends Behavior
             static::$_data[static::$_level - 1][$this->name][] = $data;
         } else {
             try {
-                /* @var $storage StorageInterface */
+                /* @var $storage BaseStorage */
                 $storage = Yii::createObject('mdm\logger\BaseStorage');
                 $storage->save($this->name, $data);
             } catch (\Exception $exc) {
