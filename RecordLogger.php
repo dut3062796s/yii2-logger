@@ -6,6 +6,7 @@ use \Yii;
 use yii\base\Behavior;
 use yii\db\BaseActiveRecord;
 use yii\base\InvalidConfigException;
+use yii\helpers\ArrayHelper;
 
 /**
  * Description of Logger
@@ -41,6 +42,12 @@ class RecordLogger extends Behavior
     private static $_data = [];
     private static $_level = 0;
 
+    /**
+     *
+     * @var BaseStorage 
+     */
+    private static $_storage = false;
+
     public function init()
     {
         if ($this->name === null) {
@@ -72,14 +79,12 @@ class RecordLogger extends Behavior
             if (!isset(static::$_data[static::$_level])) {
                 return;
             }
-            /* @var $storage BaseStorage */
-            $storage = Yii::createObject('mdm\logger\BaseStorage');
             Yii::trace(strtr('log value at {level} are {value}', [
                 '{level}' => static::$_level + 1,
                 '{value}' => \yii\helpers\VarDumper::dumpAsString(static::$_data[static::$_level])
                 ]), __METHOD__);
             foreach (static::$_data[static::$_level] as $name => $rows) {
-                $storage->batchSave($name, $rows);
+                static::batchSave($name, $rows);
             }
         } catch (\Exception $exc) {
             
@@ -118,9 +123,7 @@ class RecordLogger extends Behavior
             static::$_data[static::$_level - 1][$this->name][] = $data;
         } else {
             try {
-                /* @var $storage BaseStorage */
-                $storage = Yii::createObject('mdm\logger\BaseStorage');
-                $storage->save($this->name, $data);
+                static::save($this->name, $data);
                 Yii::trace(strtr('log value name \'{name}\' are {value}', [
                     '{name}' => $this->name,
                     '{value}' => \yii\helpers\VarDumper::dumpAsString($data)
@@ -128,6 +131,34 @@ class RecordLogger extends Behavior
             } catch (\Exception $exc) {
                 
             }
+        }
+    }
+
+    protected static function initStorage()
+    {
+        if (static::$_storage === false) {
+            $config = ArrayHelper::getValue(Yii::$app->params, 'mdm.logger.storage');
+            if ($config === null || $config instanceof BaseStorage) {
+                static::$_storage = $config;
+            } else {
+                static::$_storage = Yii::createObject($config);
+            }
+        }
+    }
+
+    protected static function save($name, $row)
+    {
+        static::initStorage();
+        if (static::$_storage !== null) {
+            static::$_storage->save($name, $row);
+        }
+    }
+
+    protected static function batchSave($name, $rows)
+    {
+        static::initStorage();
+        if (static::$_storage !== null) {
+            static::$_storage->batchSave($name, $rows);
         }
     }
 }
