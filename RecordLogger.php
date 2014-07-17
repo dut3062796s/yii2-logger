@@ -44,7 +44,7 @@ class RecordLogger extends Behavior
 
     /**
      *
-     * @var BaseStorage 
+     * @var storages\BaseStorage 
      */
     private static $_storage = false;
 

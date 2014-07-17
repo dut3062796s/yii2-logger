@@ -1,6 +1,6 @@
 <?php
 
-namespace mdm\logger;
+namespace mdm\logger\storages;
 
 /**
  * Description of DummyStorage

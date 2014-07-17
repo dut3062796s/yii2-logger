@@ -10,12 +10,15 @@
             "email": "misbahuldmunir@gmail.com"
         }
     ],
-    "require":{
-        "yiisoft/yii2-mongodb": "*"
+    "suggest":{
+        "yiisoft/yii2-mongodb": "Use for mongo storage"
     },
     "autoload": {
         "psr-4": {
             "mdm\\logger\\": ""
         }
-    }
+    },
+	"extra": {
+		"bootstrap": "mdm\\logger\\Bootstrap"
+	}
 }
