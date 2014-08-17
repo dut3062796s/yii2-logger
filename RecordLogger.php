@@ -12,31 +12,31 @@ use yii\helpers\ArrayHelper;
  * Description of Logger
  *
  * @author MDMunir
- * 
+ *
  */
 class RecordLogger extends Behavior
 {
     /**
      *
-     * @var array 
+     * @var array
      */
     public $logParams = [];
 
     /**
      *
-     * @var array 
+     * @var array
      */
     public $attributes = [];
 
     /**
      *
-     * @var string 
+     * @var string
      */
     public $name;
 
     /**
      *
-     * @var mixed 
+     * @var mixed
      */
     private static $_user_id = false;
     private static $_data = [];
@@ -44,7 +44,7 @@ class RecordLogger extends Behavior
 
     /**
      *
-     * @var storages\BaseStorage 
+     * @var storages\BaseStorage
      */
     private static $_storage = false;
 
@@ -87,7 +87,7 @@ class RecordLogger extends Behavior
                 static::batchSave($name, $rows);
             }
         } catch (\Exception $exc) {
-            
+
         }
         unset(static::$_data[static::$_level]);
     }
@@ -99,7 +99,7 @@ class RecordLogger extends Behavior
     }
 
     /**
-     * 
+     *
      * @param \yii\base\Event $event
      */
     public function insertLog($event)
@@ -129,7 +129,7 @@ class RecordLogger extends Behavior
                     '{value}' => \yii\helpers\VarDumper::dumpAsString($data)
                     ]), __METHOD__);
             } catch (\Exception $exc) {
-                
+
             }
         }
     }

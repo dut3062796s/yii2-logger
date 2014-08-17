@@ -14,7 +14,7 @@ class MongoStorage extends BaseStorage
 {
     /**
      *
-     * @var Connection 
+     * @var Connection
      */
     public $db = 'mongodb';
 
@@ -28,7 +28,7 @@ class MongoStorage extends BaseStorage
         \Yii::trace("Save to '{$name}'", __METHOD__);
         $this->db->getCollection($name)->insert($row);
     }
-    
+
     protected function doBatchSave($name, $rows)
     {
         \Yii::trace("Batch save to '{$name}'", __METHOD__);

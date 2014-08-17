@@ -19,13 +19,13 @@ class BaseStorage extends \yii\base\Object
     {
         $this->doSave($name, $row);
     }
-    
+
     protected function doBatchSave($name, $rows)
     {
         \Yii::trace("Batch save to '{$name}'", __METHOD__);
         // dont do anything
     }
-    
+
     protected function doSave($name, $row)
     {
         \Yii::trace("Save to '{$name}'", __METHOD__);
